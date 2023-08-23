@@ -19,3 +19,7 @@
 
 # Go workspace file
 go.work
+
+# Local Files
+test_request_data.txt
+request_data.txt
