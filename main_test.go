@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -104,7 +105,7 @@ func TestUpdateRequestCount_OutdatedData(t *testing.T) {
 
 	outdatedData := time.Now().Add(-time.Minute * 3)
 
-	// Simulate time passing and request events
+	// Add request events
 	requestsMutex.Lock()
 	requestsDate = append(requestsDate, outdatedData)
 	requestsMutex.Unlock()
@@ -118,4 +119,47 @@ func TestUpdateRequestCount_OutdatedData(t *testing.T) {
 		t.Errorf("Expected requestsDate to be empty, but got length %d", len(requestsDate))
 	}
 	requestsMutex.Unlock()
+}
+
+func TestSaveRequestDataToFile(t *testing.T) {
+
+	// Clean data
+	requestsDate = []time.Time{}
+
+	// Set the file name to the temporary file
+	dataFilePath = "test_request_data.txt"
+	timeNow := time.Now()
+
+	// Simulate time passing and request events
+	requestsMutex.Lock()
+	requestsDate = append(requestsDate, timeNow)
+	requestsMutex.Unlock()
+
+	// Save on temporary file
+	saveRequestDataToFile()
+
+	// Read the content of the temporary file
+	savedData, err := os.OpenFile(dataFilePath, os.O_APPEND|os.O_CREATE|os.O_RDONLY, 0644)
+	if err != nil {
+		t.Fatalf("Error reading saved file: %v", err)
+	}
+
+	// Check if saved data matches the expected
+	var timestamp int64
+	var data = []time.Time{}
+	for {
+		_, err := fmt.Fscanf(savedData, "%d\n", &timestamp)
+		if err != nil {
+			break
+		}
+		data = append(data, time.Unix(timestamp, 0))
+	}
+
+	if len(data) != 1 {
+		t.Errorf("Expected 1 lines in saved file, but got %d", len(data))
+	}
+
+	if data[0].Second() != timeNow.Second() {
+		t.Errorf("Expected that the data in saved file are equal than the request")
+	}
 }

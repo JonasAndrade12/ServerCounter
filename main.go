@@ -45,6 +45,24 @@ func updateRequestCount() {
 		}
 
 		requestsMutex.Unlock()
+
+		saveRequestDataToFile()
+	}
+}
+
+func saveRequestDataToFile() {
+	file, err := os.Create(dataFilePath)
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return
+	}
+	defer file.Close()
+
+	requestsMutex.Lock()
+	defer requestsMutex.Unlock()
+
+	for _, timestamp := range requestsDate {
+		fmt.Fprintf(file, "%d\n", timestamp.Unix())
 	}
 }
 
