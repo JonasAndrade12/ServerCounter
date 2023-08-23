@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 )
 
 var (
-	requestsDate    []time.Time
-	windowStartTime time.Time
-	dataFilePath    = "request_counter.txt"
+	requestsDate  []time.Time
+	dataFilePath  = "request_counter.txt"
+	requestsMutex sync.Mutex
 )
 
 func loadRequestDataFromFile() {
@@ -30,15 +31,37 @@ func loadRequestDataFromFile() {
 	}
 }
 
+func updateRequestCount() {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		requestsMutex.Lock()
+
+		now := time.Now()
+		// Remove outdated requests
+		for len(requestsDate) > 0 && now.Sub(requestsDate[0]) >= time.Minute {
+			requestsDate = requestsDate[1:]
+		}
+
+		requestsMutex.Unlock()
+	}
+}
+
 func requestHandler(w http.ResponseWriter, r *http.Request) {
+	requestsMutex.Lock()
+	defer requestsMutex.Unlock()
+
 	fmt.Fprintf(w, "Total requests in the last 60 seconds: %d\n", len(requestsDate))
+
+	requestsDate = append(requestsDate, time.Now())
 }
 
 func main() {
 
 	loadRequestDataFromFile()
 
-	windowStartTime = time.Now()
+	go updateRequestCount()
 
 	http.HandleFunc("/", requestHandler)
 
