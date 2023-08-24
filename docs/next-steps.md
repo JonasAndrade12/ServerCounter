@@ -8,7 +8,8 @@ This product should have a versioned API in order to have more flexibility when 
 
 ## CI/CD
 
-Create a docker image in order to run the application
+~~Create a docker image in order to run the application~~
+Create a docker compose file to create and run the application in an container
 
 ## Monitoring
 
