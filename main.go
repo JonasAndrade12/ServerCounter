@@ -67,12 +67,20 @@ func saveRequestDataToFile() {
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
-	requestsMutex.Lock()
-	defer requestsMutex.Unlock()
+	done := make(chan struct{}) // Channel to signal completion
 
-	fmt.Fprintf(w, "Total requests in the last 60 seconds: %d\n", len(requestsDate))
+	go func() {
 
-	requestsDate = append(requestsDate, time.Now())
+		requestsMutex.Lock()
+		defer requestsMutex.Unlock()
+
+		fmt.Fprintf(w, "Total requests in the last 60 seconds: %d\n", len(requestsDate))
+
+		requestsDate = append(requestsDate, time.Now())
+		close(done)
+	}()
+
+	<-done
 }
 
 func main() {

@@ -19,7 +19,9 @@ Improve logs
 
 ## Testing
 
-Testing should be improved with load testing to ensure the application could stand high traffic and integration tests to test all flow
+~~Testing should be improved with load testing to ensure the application could stand high traffic and integration tests to test all flow~~
+Create a end-to-end automated tests
+Improve unit tests to run faster
 
 ## Architecture
 
