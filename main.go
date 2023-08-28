@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sort"
 	"sync"
 	"time"
 )
@@ -39,14 +40,17 @@ func updateRequestCount() {
 		requestsMutex.Lock()
 
 		now := time.Now()
-		// Remove outdated requests
-		for len(requestsDate) > 0 && now.Sub(requestsDate[0]) >= time.Minute {
-			requestsDate = requestsDate[1:]
+		// Remove outdated requests using binary search
+		idx := sort.Search(len(requestsDate), func(i int) bool {
+			return now.Sub(requestsDate[i]) < time.Minute
+		})
+		if idx > 0 {
+			requestsDate = requestsDate[idx:]
 		}
 
 		requestsMutex.Unlock()
 
-		saveRequestDataToFile()
+		go saveRequestDataToFile()
 	}
 }
 
@@ -67,7 +71,7 @@ func saveRequestDataToFile() {
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
-	done := make(chan struct{}) // Channel to signal completion
+	done := make(chan struct{})
 
 	go func() {
 
